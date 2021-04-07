@@ -58,7 +58,6 @@ export default {
   },
   methods: {
     getDetalhes() {
-      console.log(this.$route.params);
       EventBus.$emit('loading',true);
       http.get(`/cards/${this.$route.params.id}`)
         .then(( { data } )=>{

@@ -51,7 +51,7 @@ export default {
   methods: {
     carregar() {
       EventBus.$emit('loading',true);
-      http.get(`/cards?pageSize=${this.pageSize}&orderBy=name`)
+      http.get(`/cards?q=supertype:pokemon&orderBy=name`)
         .then(( { data } )=>{
         this.pokemons = data;
         this.loaded = true
