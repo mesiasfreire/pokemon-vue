@@ -2,20 +2,30 @@
 <section v-if="load">
   <div class="input-group">
     <label for="buscar">Buscar:
-    <input type="text" v-model="pokemonName" name="buscar" placeholder="Digite nome do pokemon:">
+    <input 
+      type="text" 
+      v-model="pokemonName" 
+      @keyup.enter="buscarNome" 
+      @change="reset" 
+      name="buscar" 
+      placeholder="Digite nome do pokemon:"
+    />
+
     <button @click.prevent="buscarNome" >
        <font-awesome-icon icon="search" />
     </button>
      </label>
   </div>
-  
   <div class="home" > 
-    <div v-for="pokemon in pokemons.data" :key="pokemon.id" class="content">
+    <div v-for="(pokemon, index) in pokemonsList.data" :key="index" class="content">
       <router-link
         :to="`/detalhes/${pokemon.id}`">
         <img :src="pokemon.images.small" :alt="pokemon.name">
       </router-link>
     </div>
+  </div>
+  <div v-if="btnLoaded">
+    <button  @click="carregarMais" class="glow-on-hover">CARREGAR MAIS</button>
   </div>
 </section>
   
@@ -35,9 +45,10 @@ export default {
       pokemons:[],
       loaded:false,
       totalCount:null,
-      pageSize:100,
+      pageSize:20,
       page:1,
-      pokemonName:''
+      pokemonName:'',
+      loading:true
     }
   },
   created() {
@@ -46,32 +57,67 @@ export default {
   computed: {
     load(){
       return this.loaded; 
+    },
+    pokemonsList(){
+      return this.pokemons;
+    },
+    btnLoaded(){
+      return this.loading
     }
   },
   methods: {
     carregar() {
+      if(this.pokemons.length === 0){
+        EventBus.$emit('loading',true);
+        http.get(`/cards?q=supertype:pokemon&pageSize=${this.pageSize}&page=${this.page}&orderBy=name`)
+         .then(( { data } )=>{
+         this.pokemons = data;
+         this.totalCount = data.totalCount;
+         this.loaded = true
+         this.loading = true
+         EventBus.$emit('loading',false);
+        })
+      }
+      
+    },
+    buscarNome() {
+      this.loaded = false;
       EventBus.$emit('loading',true);
-      http.get(`/cards?q=supertype:pokemon&orderBy=name`)
+      http.get(`/cards?q=name:${this.pokemonName}*&orderBy=name`)
         .then(( { data } )=>{
         this.pokemons = data;
         this.loaded = true
+        this.loading =false
         EventBus.$emit('loading',false);
       })
     },
-    buscarNome() {
-      this.loaded = false
-      EventBus.$emit('loading',true);
-      http.get(`/cards?q=name:${this.pokemonName}&orderBy=name`)
-        .then(( { data } )=>{
-        this.pokemons = data;
-        this.loaded = true
+    carregarMais(){
+      this.loading = false;
+       EventBus.$emit('loading',true);
+       this.page = this.page+1;
+       http.get(`/cards?q=supertype:pokemon&pageSize=${this.pageSize}&page=${this.page}&orderBy=name`)
+        .then(({data} )=> {
+        this.pokemons.data.push(...data.data);
+        this.loading = true
         EventBus.$emit('loading',false);
       })
+    },
+    reset(){
+      if(this.pokemonName.length === 0) {
+        this.pokemons =[];
+        this.page=1;
+        this.carregar();
+      }
     }
   }
 }
 </script>
 <style lang="scss" scoped>
+section {
+  button {
+    margin: 20px;
+  }
+}
 .home {
   display: flex;
   flex-wrap: wrap;
@@ -82,6 +128,9 @@ export default {
 
   .content {
     padding:10px;
+    img {
+      width: 200px;
+    }
   }
 }
 
@@ -110,11 +159,21 @@ export default {
       border: none;
       cursor:pointer;
       overflow: hidden;     
-      
     }
   
   }
   
+}
+@media(max-width: 425px) {
+  .home {
+    .content {
+    padding:5px;
+    img {
+      width: 300px;
+    }
+  }
+  }
+   
 }
 
 </style>

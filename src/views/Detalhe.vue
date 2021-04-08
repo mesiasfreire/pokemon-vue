@@ -34,12 +34,10 @@
         <ul v-for="(fraqueza, index) in detalhe.weaknesses" :key="index">
           <li>Tipo: {{fraqueza.type}}</li>
           <li>Valor: {{fraqueza.value}}</li>
-
         </ul>
       </section>
-     
-
     </div>
+    <button class="glow-on-hover" @click="$router.go(-1)">Voltar</button>
   </div>
 </template>
 <script>
@@ -100,6 +98,10 @@ export default {
     li {
       list-style: none;
     }
+  }
+  button {
+    margin-top:30px;
+    display:block
   }
 }
 </style>
